@@ -1,90 +1,108 @@
 # =========================================================
-#  FILE: inst_09.ps1 (LINE PC - GDrive Hybrid v3.1)
+#  FILE: inst_09.ps1 (LINE PC - Standalone with Auto 7-Zip)
 # =========================================================
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# [DEBUG] Version Check
-Write-Host "`n [ VERSION ] v3.1 (Hybrid: Aria2 -> Auto Fallback)" -ForegroundColor Magenta
-Write-Host " ----------------------------------------" -ForegroundColor Gray
-
-# [CONFIG] ID ไฟล์ .rar
+# [CONFIG]
 $GDriveID = "17pDr9jVgPWmLnnSAgXKXZw4c88fn0CRn" 
 $Password = "ITG2"
 
-$archiveFile = "$env:TEMP\LineSetup.rar"
+$zipFile = "$env:TEMP\LineSetup.rar"
 $extractDir = "$env:TEMP\Line_Extract"
-$tempResponse = "$env:TEMP\gdrive_probe.tmp"
 $aria2 = "$env:TEMP\aria2c.exe"
+$tempResponse = "$env:TEMP\gdrive_probe.tmp"
 
-# --- [FUNCTION] ระบบโหลดอัจฉริยะ (Aria2 -> Fallback to Native) ---
-function Get-GDriveFile-Hybrid {
-    param ($ID, $OutFile)
+# -----------------------------------------------------------
+# STEP 0: 7-ZIP DEPENDENCY CHECK & AUTO-INSTALL
+# -----------------------------------------------------------
+Write-Host "[ INIT ] Checking dependencies..." -ForegroundColor Cyan
+
+$7zPath = "$env:ProgramFiles\7-Zip\7z.exe"
+if (-not (Test-Path $7zPath)) { $7zPath = "${env:ProgramFiles(x86)}\7-Zip\7z.exe" }
+
+if (-not (Test-Path $7zPath)) {
+    Write-Host "   >> 7-Zip not found. Auto-installing..." -ForegroundColor Yellow
     
+    # Download 7-Zip
+    $7zUrl = "https://www.7-zip.org/a/7z2408-x64.exe"
+    $7zInstaller = "$env:TEMP\7z_setup.exe"
+    
+    try {
+        Invoke-WebRequest $7zUrl -OutFile $7zInstaller -UseBasicParsing
+        Start-Process -FilePath $7zInstaller -ArgumentList "/S" -Wait
+        
+        # Re-check path
+        if (Test-Path "$env:ProgramFiles\7-Zip\7z.exe") { 
+            $7zPath = "$env:ProgramFiles\7-Zip\7z.exe"
+            Write-Host "   >> 7-Zip installed successfully." -ForegroundColor Green
+        } else {
+             throw "Failed to install 7-Zip automatically."
+        }
+        Remove-Item $7zInstaller -Force
+    } catch {
+        throw "Could not download/install 7-Zip. Please install manually."
+    }
+} else {
+    Write-Host "   >> 7-Zip is ready." -ForegroundColor Green
+}
+
+# -----------------------------------------------------------
+# FUNCTION: GDrive Hybrid Download (Aria2 + Fallback)
+# -----------------------------------------------------------
+function Get-GDriveFile {
+    param ($ID, $OutFile)
     $url = "https://drive.google.com/uc?export=download&id=$ID"
     Write-Host "[ CLOUD ] Probing Google Drive..." -ForegroundColor Cyan
     
     try {
-        # 1. PROBE: ยิงไปดูลาดเลาก่อน (เก็บ Session/Cookie)
+        # 1. Probe & Parse
         Invoke-WebRequest -Uri $url -SessionVariable session -OutFile $tempResponse -UseBasicParsing
         
         $fileSize = (Get-Item $tempResponse).Length
         $finalUrl = $url 
         $useAria2 = $false
         
-        # 2. ANALYZE: เช็คว่าติดหน้า Virus Scan ไหม
         if ($fileSize -lt 100000) {
             $content = Get-Content $tempResponse -Raw
             if ($content -match "download-form" -or $content -match "confirm=") {
                 Write-Host "   >> Virus warning detected. Parsing token..." -ForegroundColor Magenta
                 
-                # แกะ URL Action (Domain)
                 $actionUrl = "https://drive.usercontent.google.com/download"
-                if ($content -match 'action="([^"]+)"') { 
-                    $actionUrl = $matches[1] -replace '&amp;', '&' 
-                }
+                if ($content -match 'action="([^"]+)"') { $actionUrl = $matches[1] -replace '&amp;', '&' }
                 
-                # แกะ Token
                 $uuid = ""; $confirm = "t"
                 if ($content -match 'name="uuid" value="([^"]+)"') { $uuid = $matches[1] }
                 if ($content -match 'name="confirm" value="([^"]+)"') { $confirm = $matches[1] }
                 
                 if ($uuid) {
-                    # สร้างลิงก์ตรง
                     $finalUrl = "$actionUrl" + "?id=$ID&export=download&confirm=$confirm&uuid=$uuid"
                     $useAria2 = $true
-                    Write-Host "   >> Token Acquired." -ForegroundColor Yellow
                 }
             }
         } else {
-            # ถ้าได้ไฟล์เลย (ไม่ติด Scan) -> จบงาน (ใช้ไฟล์ที่ Probe มาเลย)
-            Write-Host "   >> Direct download completed (Standard Speed)." -ForegroundColor Green
             Move-Item $tempResponse $OutFile -Force
             return 
         }
         
-        # 3. ATTEMPT ARIA2 (ถ้ามี Token และมีโปรแกรม)
+        # 2. Download Execution
         $ariaSuccess = $false
         if ($useAria2 -and (Test-Path $aria2)) {
-            Write-Host "   >> Attempting High-Speed Download (Aria2)..." -ForegroundColor Cyan
-            
-            # สร้างไฟล์ Cookie (รวมทุก Domain ที่เป็นไปได้)
+            Write-Host "   >> Downloading via Aria2 (16 Connections)..." -ForegroundColor Cyan
             $cookieFile = "$env:TEMP\gdrive_cookies.txt"
             if (Test-Path $cookieFile) { Remove-Item $cookieFile -Force }
             
-            $domains = @("https://drive.google.com", "https://drive.usercontent.google.com", "$finalUrl")
-            foreach ($d in $domains) {
-                try {
-                    foreach ($cookie in $session.Cookies.GetCookies([Uri]$d)) {
-                        $line = "$($cookie.Domain)`tTRUE`t$($cookie.Path)`t$($cookie.Secure.ToString().ToUpper())`t$($cookie.Expires.Ticks)`t$($cookie.Name)`t$($cookie.Value)"
-                        Add-Content -Path $cookieFile -Value $line -ErrorAction SilentlyContinue
-                    }
-                } catch {}
-            }
+            # Save Cookies
+            try {
+                foreach ($cookie in $session.Cookies.GetCookies([Uri]$finalUrl)) {
+                    $line = "$($cookie.Domain)`tTRUE`t$($cookie.Path)`t$($cookie.Secure.ToString().ToUpper())`t$($cookie.Expires.Ticks)`t$($cookie.Name)`t$($cookie.Value)"
+                    Add-Content -Path $cookieFile -Value $line -ErrorAction SilentlyContinue
+                }
+            } catch {}
 
-            # [FIXED SYNTAX] ใช้ Array Argument เพื่อความชัวร์ 100%
             $ariaArgs = @(
                 "-x", "16", "-s", "16", "-j", "1",
+                "--disable-ipv6=true",
                 "--check-certificate=false",
                 "--load-cookies=$cookieFile",
                 "--user-agent=Mozilla/5.0",
@@ -94,55 +112,42 @@ function Get-GDriveFile-Hybrid {
             )
             
             $procA = Start-Process -FilePath $aria2 -ArgumentList $ariaArgs -Wait -PassThru -NoNewWindow
-            
-            # ตรวจสอบผลงาน Aria2
-            if ($procA.ExitCode -eq 0 -and (Test-Path $OutFile)) {
-                if ((Get-Item $OutFile).Length -gt 100000) {
-                    $ariaSuccess = $true
-                    Write-Host "   >> Aria2 Success!" -ForegroundColor Green
-                }
-            }
+            if ($procA.ExitCode -eq 0 -and (Test-Path $OutFile)) { $ariaSuccess = $true }
         }
 
-        # 4. FALLBACK (ถ้า Aria2 พลาด หรือไม่ได้ใช้ ให้ใช้ PowerShell โหลดต่อ)
         if (-not $ariaSuccess) {
-            if ($useAria2) { Write-Host "   >> Aria2 failed. Switching to Standard Download..." -ForegroundColor Red }
-            else { Write-Host "   >> Downloading..." -ForegroundColor Cyan }
-            
-            # ใช้ Session เดิมยิงโหลดเลย
+            Write-Host "   >> Standard Download..." -ForegroundColor Yellow
             Invoke-WebRequest -Uri $finalUrl -WebSession $session -OutFile $OutFile -UseBasicParsing
-            Write-Host "   >> Standard Download Success." -ForegroundColor Green
         }
         
-    } catch {
-        throw "GDrive Error: $_"
-    } finally {
+    } catch { throw "GDrive Error: $_" }
+    finally { 
         if (Test-Path $tempResponse) { Remove-Item $tempResponse -Force }
         if (Test-Path "$env:TEMP\gdrive_cookies.txt") { Remove-Item "$env:TEMP\gdrive_cookies.txt" -Force }
     }
 }
+
 # -----------------------------------------------------------
-
+# MAIN PROCESS
+# -----------------------------------------------------------
 try {
-    # 1. DOWNLOAD
-    if (Test-Path $archiveFile) { Remove-Item $archiveFile -Force }
-    Get-GDriveFile-Hybrid -ID $GDriveID -OutFile $archiveFile
+    # 1. Download LINE RAR
+    if (Test-Path $zipFile) { Remove-Item $zipFile -Force }
+    Get-GDriveFile -ID $GDriveID -OutFile $zipFile
 
-    if ((Get-Item $archiveFile).Length -lt 1000000) { throw "File too small (Download failed)." }
+    if ((Get-Item $zipFile).Length -lt 1000000) { throw "File too small." }
 
-    # 2. EXTRACT
-    $7z = "$env:ProgramFiles\7-Zip\7z.exe"
-    if (-not (Test-Path $7z)) { $7z = "${env:ProgramFiles(x86)}\7-Zip\7z.exe" }
-    if (-not (Test-Path $7z)) { throw "7-Zip not found. Please install Menu [01]." }
-
+    # 2. Extract with 7-Zip
     Write-Host "[ LINE ] Extracting..." -ForegroundColor Yellow
     if (Test-Path $extractDir) { Remove-Item $extractDir -Recurse -Force }
     
-    $7zArgs = "x ""$archiveFile"" -o""$extractDir"" -p""$Password"" -y"
-    $proc7z = Start-Process -FilePath $7z -ArgumentList $7zArgs -Wait -PassThru -NoNewWindow
+    # ใช้ $7zPath ที่หาเจอตั้งแต่ต้น
+    $7zArgs = "x ""$zipFile"" -o""$extractDir"" -p""$Password"" -y"
+    $proc7z = Start-Process -FilePath $7zPath -ArgumentList $7zArgs -Wait -PassThru -NoNewWindow
+    
     if ($proc7z.ExitCode -ne 0) { throw "Extraction Failed (Wrong Password?)" }
 
-    # 3. INSTALL
+    # 3. Install & Kill
     $realInstaller = Get-ChildItem "$extractDir\*.exe" -Recurse | Select-Object -First 1
     if ($realInstaller) {
         Write-Host "[ LINE ] Installing..." -ForegroundColor Cyan
@@ -153,7 +158,7 @@ try {
             Start-Sleep -Seconds 2; $timeout++
             $lineApp = Get-Process "LINE" -ErrorAction SilentlyContinue
             if ($lineApp) {
-                Write-Host "[ FIX ] Killing Auto-Start LINE..." -ForegroundColor Magenta
+                Write-Host "[ FIX ] Closing LINE Auto-Start..." -ForegroundColor Magenta
                 $lineApp | Stop-Process -Force -ErrorAction SilentlyContinue
                 if (-not $proc.HasExited) { $proc | Stop-Process -Force -ErrorAction SilentlyContinue }
                 break
@@ -162,14 +167,15 @@ try {
         }
 
         Write-Host "[ SUCCESS ] LINE PC Installed." -ForegroundColor Green
-        Remove-Item $archiveFile -Force -ErrorAction SilentlyContinue
+        
+        # Cleanup ALL
+        Remove-Item $zipFile -Force -ErrorAction SilentlyContinue
         Remove-Item $extractDir -Recurse -Force -ErrorAction SilentlyContinue
     } else {
-        throw "Installer not found in archive."
+        throw "Installer not found."
     }
 
 } catch {
     Write-Host "[ ERROR ] $_" -ForegroundColor Red
-    if (Test-Path $archiveFile) { Remove-Item $archiveFile -Force -ErrorAction SilentlyContinue }
     exit 1
 }
