@@ -28,7 +28,7 @@ for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 if exist "%DB_FILE%" ( call "%DB_FILE%" ) else ( echo [ERROR] Database Missing! & pause & exit )
 if exist "%THEME_FILE%" ( call "%THEME_FILE%" ) else ( echo [ERROR] Theme Missing! & pause & exit )
 
-title IT Groceries Shop - Ultimate Installer [v20.5]
+title IT Groceries Shop - Ultimate Installer [Base on v17.5]
 
 REM [RESET VARS]
 for /L %%n in (1,1,40) do (
@@ -140,4 +140,5 @@ exit /b
 :EXIT_CLEANUP
 if exist "%TEMP%\aria2c.exe" del "%TEMP%\aria2c.exe" >nul
 if exist "%TEMP%\Master.ps1" del "%TEMP%\Master.ps1" >nul
+
 exit
