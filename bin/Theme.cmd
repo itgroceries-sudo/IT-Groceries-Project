@@ -17,7 +17,7 @@ set "Bg_Yellow=%ESC%[43m" & set "Bg_Cyan=%ESC%[46m" & set "Bg_Magenta=%ESC%[45m"
 set "Black=%ESC%[30m" & set "Cyan=%ESC%[36m" & set "White=%ESC%[37m"
 
 :: 4. ตั้งค่า Icon
-set "ICON_FILE=%~dp0Google.ico"
+set "ICON_FILE=%~dp0ITGBlog.ico"
 if exist "%ICON_FILE%" (
     powershell -Command ^
       "$d='[DllImport(\"user32.dll\")] public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);[DllImport(\"user32.dll\")] public static extern IntPtr LoadImage(IntPtr hinst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);[DllImport(\"kernel32.dll\")] public static extern IntPtr GetConsoleWindow();';" ^
@@ -40,5 +40,6 @@ powershell -Command ^
   "$t::SetWindowLong($h,-16,$style -band 0xFFFEFFFF);" ^
   "$m=$t::GetSystemMenu($h,$false);" ^
   "$t::DeleteMenu($m,0xF060,0);" >nul 2>&1
+
 
 exit /b
