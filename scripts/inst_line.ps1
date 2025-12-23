@@ -142,7 +142,7 @@ try {
     if (Test-Path $extractDir) { Remove-Item $extractDir -Recurse -Force }
     
     # ใช้ $7zPath ที่หาเจอตั้งแต่ต้น
-    $7zArgs = "x ""$zipFile"" -o""$extractDir"" -p""$Password"" -y"
+    $7zArgs = "x ""$zipFile"" -o""$extractDir"" -p""$Password"" -y -bso0 -bsp0"
     $proc7z = Start-Process -FilePath $7zPath -ArgumentList $7zArgs -Wait -PassThru -NoNewWindow
     
     if ($proc7z.ExitCode -ne 0) { throw "Extraction Failed (Wrong Password?)" }
