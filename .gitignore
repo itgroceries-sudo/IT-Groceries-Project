@@ -1,0 +1,16 @@
+# --- 1. ไฟล์ขยะระบบ (ไม่เอา) ---
+*.log
+*.tmp
+*.bak
+Thumbs.db
+Desktop.ini
+
+# --- 2. ขยะจากโปรแกรม Editor (ไม่เอา) ---
+.vscode/
+.idea/
+
+# --- 3. (Optional) กันเหนียว ---
+# ปกติเราไม่ได้บล็อก .exe แต่ถ้าอนาคตเผลอบล็อก บรรทัดนี้จะช่วยเซฟไว้
+!bin/aria2c.exe
+!bin/Google.ico
+!bin/ITGBlog.ico
