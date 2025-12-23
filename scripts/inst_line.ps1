@@ -111,7 +111,7 @@ function Get-GDriveFile {
                 "$finalUrl"
             )
             
-            $procA = Start-Process -FilePath $aria2 -ArgumentList $ariaArgs -Wait -PassThru -NoNewWindow *>$null
+            $procA = Start-Process -FilePath $aria2 -ArgumentList $ariaArgs -Wait -PassThru -NoNewWindow
             if ($procA.ExitCode -eq 0 -and (Test-Path $OutFile)) { $ariaSuccess = $true }
         }
 
