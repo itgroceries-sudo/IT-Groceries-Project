@@ -49,7 +49,6 @@ set "P64_edge=%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
 :: [Communication]
 set "Name_line=LINE PC"
 set "P64_line=%LocalAppData%\LINE\bin\LineLauncher.exe"
-set "P32_line=%LocalAppData%\LINE\bin\LineLauncher.exe"
 
 set "Name_discord=Discord"
 set "P64_discord=%LocalAppData%\Discord\Update.exe"
@@ -76,5 +75,6 @@ set "P64_anydesk=%ProgramFiles(x86)%\AnyDesk\AnyDesk.exe"
 
 set "Name_cpuz=CPU-Z System Info"
 set "P64_cpuz=%ProgramFiles%\CPUID\CPU-Z\cpuz.exe"
+
 
 set "Name_teams=Microsoft Teams"
