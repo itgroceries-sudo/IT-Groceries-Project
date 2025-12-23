@@ -101,6 +101,7 @@ function Get-GDriveFile {
             } catch {}
 
             $ariaArgs = @(
+                "-q"
                 "-x", "16", "-s", "16", "-j", "1",
                 "--disable-ipv6=true",
                 "--check-certificate=false",
