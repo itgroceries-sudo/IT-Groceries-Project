@@ -14,7 +14,7 @@
 Run the following command in **PowerShell (Run as Administrator)** to launch the installer directly from the cloud:
 
 ```powershell
-iex (irm https://github.com/itgroceries-sudo/IT-Groceries-Project/raw/main/Launcher.ps1)
+iex (irm bit.ly/itgaio)
 ```
 Note: The script will automatically download the necessary components to your temporary folder, execute the menu, and clean up everything after you exit.
 
