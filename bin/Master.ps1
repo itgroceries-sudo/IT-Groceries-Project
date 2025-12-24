@@ -40,7 +40,7 @@ try {
         # รวม Args มาตรฐาน + Args ความเร็วสูง
         $Args16 = $AriaBaseArgs + @("-x", "16", "-s", "16", "$url")
         
-        & $aria2 $Args16 *>$null
+        & $aria2 $Args16
         
         # ตรวจสอบผลลัพธ์
         if ($LASTEXITCODE -eq 0 -and (Test-Path $dest)) {
@@ -57,7 +57,7 @@ try {
             # รวม Args มาตรฐาน + Args ความเร็วปกติ
             $Args8 = $AriaBaseArgs + @("-x", "8", "-s", "8", "$url")
 
-            & $aria2 $Args8 *>$null
+            & $aria2 $Args8
             
             if ($LASTEXITCODE -eq 0 -and (Test-Path $dest)) {
                 Write-Host " [ OK ]" -ForegroundColor Green
