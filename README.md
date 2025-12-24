@@ -1,4 +1,4 @@
-# 🛒 IT Groceries Shop - Ultimate Installer (Portable Edition)
+# 🛒 IT Groceries Shop - Ultimate Installer
 
 ![Platform](https://img.shields.io/badge/Platform-Windows_10%2F11-blue?style=for-the-badge&logo=windows)
 ![Language](https://img.shields.io/badge/Script-PowerShell_%26_Batch-green?style=for-the-badge&logo=powershell)
