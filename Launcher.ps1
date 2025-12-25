@@ -36,7 +36,7 @@ if (-not $PSCommandPath -or -not $IsAdmin) {
 }
 
 # --- [STEP 2] VISUAL HELPERS ---
-$Host.UI.RawUI.WindowTitle = "IT Groceries Launcher ($RandomID)"
+$Host.UI.RawUI.WindowTitle = "IT Groceries Launcher ($RandomID) | $(Get-Date -Format 'dd-MM-yyyy HH:mm')"
 try { mode con: cols=85 lines=30 } catch {}
 
 # 2.1 Window & Icon
@@ -209,4 +209,5 @@ if (Test-Path $InstallerFile) {
     Write-Host "Error: $_" -ForegroundColor Red
     Start-Sleep 3
 }
+
 
