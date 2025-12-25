@@ -47,7 +47,7 @@ set "P32_firefox=%ProgramFiles(x86)%\Mozilla Firefox\firefox.exe"
 set "Name_edge=Microsoft Edge"
 set "P64_edge=%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
 
-set "Name_phoptoshop=PhotoShop 2026"
+set "Name_photoshop=PhotoShop 2026"
 
 :: [Communication]
 set "Name_line=LINE PC"
@@ -81,4 +81,5 @@ set "P64_cpuz=%ProgramFiles%\CPUID\CPU-Z\cpuz.exe"
 
 
 set "Name_teams=Microsoft Teams"
+
 
