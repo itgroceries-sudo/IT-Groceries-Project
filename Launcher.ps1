@@ -1,8 +1,3 @@
-# =========================================================
-#  FILE: Bootstrapper.ps1 (Run This on Client Machine)
-# =========================================================
-
-# --- [STEP 1] AUTO-ELEVATE ADMIN (ส่วนที่หายไป) ---
 $CurrentPrincipal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
 if (-not $CurrentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Host " [ SYSTEM ] Requesting Administrator Privileges..." -ForegroundColor Yellow
@@ -15,7 +10,6 @@ if (-not $CurrentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Adm
     }
 }
 
-# --- [STEP 2] CONFIGURATION ---
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
@@ -46,4 +40,5 @@ try {
     Write-Host " Please check your internet connection." -ForegroundColor Yellow
     Read-Host " Press Enter to exit..."
 }
+
 
