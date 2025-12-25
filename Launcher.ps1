@@ -37,7 +37,7 @@ if (-not $PSCommandPath -or -not $IsAdmin) {
 
 # --- [STEP 2] VISUAL HELPERS ---
 $Host.UI.RawUI.WindowTitle = "IT Groceries Launcher ($RandomID)"
-try { mode con: cols=85 lines=25 } catch {}
+try { mode con: cols=85 lines=30 } catch {}
 
 # 2.1 Window & Icon
 try {
@@ -107,10 +107,20 @@ function Show-Spinner {
 Clear-Host
 Write-Host "`n"
 Draw-Center "=====================================================================================" "DarkCyan"
-Draw-Center "AiO ( Freeware Silent Installer ) [ GitHub UI ]" "White" "DarkCyan"
+Draw-Center "AiO ( Freeware Silent Installer ) [ Cloud UI ]" "White" "DarkCyan"
 Draw-Center "Powered by IT Groceries Shop" "Cyan"
 Draw-Center "=====================================================================================" "DarkCyan"
 Write-Host "`n"
+Draw-Center "This software is provided as FREEWARE for educational usage." "Yellow"
+Draw-Center "Crafted with dedication to streamline your workflow." "Gray"
+Write-Host ""
+$Pad1 = " " * 19
+Write-Host $Pad1 -NoNewline; Write-Host "If you find this tool helpful, please Support Us by" -ForegroundColor White
+Write-Host $Pad1 -NoNewline; Write-Host "Subscribing to our YouTube Channel: " -NoNewline -ForegroundColor White; Write-Host "IT Groceries" -ForegroundColor Green
+Write-Host ""
+Draw-Center "Your support drives our future updates. Thank you!" "Magenta"
+Write-Host "`n"
+
 
 $PadInput = " " * 25
 Write-Host $PadInput -NoNewline
@@ -199,3 +209,4 @@ if (Test-Path $InstallerFile) {
     Write-Host "Error: $_" -ForegroundColor Red
     Start-Sleep 3
 }
+
