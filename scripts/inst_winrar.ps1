@@ -1,5 +1,5 @@
 # =========================================================
-#  FILE: inst_09.ps1 (LINE PC - Standalone with Auto 7-Zip)
+#  FILE: inst_09.ps1 (WinRAR - Standalone with Auto 7-Zip)
 # =========================================================
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -95,8 +95,8 @@ function Get-GDriveFile {
             # Save Cookies
             try {
                 foreach ($cookie in $session.Cookies.GetCookies([Uri]$finalUrl)) {
-                    $line = "$($cookie.Domain)`tTRUE`t$($cookie.Path)`t$($cookie.Secure.ToString().ToUpper())`t$($cookie.Expires.Ticks)`t$($cookie.Name)`t$($cookie.Value)"
-                    Add-Content -Path $cookieFile -Value $line -ErrorAction SilentlyContinue
+                    $WinRAR = "$($cookie.Domain)`tTRUE`t$($cookie.Path)`t$($cookie.Secure.ToString().ToUpper())`t$($cookie.Expires.Ticks)`t$($cookie.Name)`t$($cookie.Value)"
+                    Add-Content -Path $cookieFile -Value $WinRAR -ErrorAction SilentlyContinue
                 }
             } catch {}
 
@@ -108,7 +108,7 @@ function Get-GDriveFile {
                 "--load-cookies=$cookieFile",
                 "--user-agent=Mozilla/5.0",
                 "-d", "$env:TEMP",
-                "-o", "LineSetup.rar",
+                "-o", "WinRARSetup.rar",
                 "$finalUrl"
             )
             
@@ -132,14 +132,14 @@ function Get-GDriveFile {
 # MAIN PROCESS
 # -----------------------------------------------------------
 try {
-    # 1. Download LINE RAR
+    # 1. Download WinRAR RAR
     if (Test-Path $zipFile) { Remove-Item $zipFile -Force }
     Get-GDriveFile -ID $GDriveID -OutFile $zipFile
 
     if ((Get-Item $zipFile).Length -lt 1000000) { throw "File too small." }
 
     # 2. Extract with 7-Zip
-    Write-Host "[ LINE ] Extracting..." -ForegroundColor Yellow
+    Write-Host "[ WinRAR ] Extracting..." -ForegroundColor Yellow
     if (Test-Path $extractDir) { Remove-Item $extractDir -Recurse -Force }
     
     # ใช้ $7zPath ที่หาเจอตั้งแต่ต้น
@@ -151,23 +151,23 @@ try {
     # 3. Install & Kill
     $realInstaller = Get-ChildItem "$extractDir\*.exe" -Recurse | Select-Object -First 1
     if ($realInstaller) {
-        Write-Host "[ LINE ] Installing..." -ForegroundColor Cyan
+        Write-Host "[ WinRAR ] Installing..." -ForegroundColor Cyan
         $proc = Start-Process -FilePath $realInstaller.FullName -ArgumentList "/S" -PassThru
         
         $timeout = 0
         while (-not $proc.HasExited) {
             Start-Sleep -Seconds 2; $timeout++
-            $lineApp = Get-Process "LINE" -ErrorAction SilentlyContinue
-            if ($lineApp) {
-                Write-Host "[ FIX ] Closing LINE Auto-Start..." -ForegroundColor Magenta
-                $lineApp | Stop-Process -Force -ErrorAction SilentlyContinue
+            $WinRARApp = Get-Process "WinRAR" -ErrorAction SilentlyContinue
+            if ($WinRARApp) {
+                Write-Host "[ FIX ] Closing WinRAR Auto-Start..." -ForegroundColor Magenta
+                $WinRARApp | Stop-Process -Force -ErrorAction SilentlyContinue
                 if (-not $proc.HasExited) { $proc | Stop-Process -Force -ErrorAction SilentlyContinue }
                 break
             }
             if ($timeout -ge 120) { $proc | Stop-Process -Force; break }
         }
 
-        Write-Host "[ SUCCESS ] LINE PC Installed." -ForegroundColor Green
+        Write-Host "[ SUCCESS ] WinRAR PC Installed." -ForegroundColor Green
         
         # Cleanup ALL
         Remove-Item $zipFile -Force -ErrorAction SilentlyContinue
