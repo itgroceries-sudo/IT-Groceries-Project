@@ -1,9 +1,3 @@
-# [ADMIN CHECK] Auto-Elevate (บังคับรันเป็น Admin ทันที)
-if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Start-Process PowerShell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
-    exit
-}
-
 <#
 .SYNOPSIS
     IT Groceries Cloud Bootstrapper
@@ -66,4 +60,5 @@ Start-Sleep -Seconds 1
 Remove-Item $WorkSpace -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host "[ DONE ] Thank you for using IT Groceries Shop." -ForegroundColor Magenta
+
 
