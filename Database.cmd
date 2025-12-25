@@ -79,7 +79,9 @@ set "P64_anydesk=%ProgramFiles(x86)%\AnyDesk\AnyDesk.exe"
 set "Name_cpuz=CPU-Z System Info"
 set "P64_cpuz=%ProgramFiles%\CPUID\CPU-Z\cpuz.exe"
 
+set "Name_winrar=WinRAR"
 
 set "Name_teams=Microsoft Teams"
+
 
 
