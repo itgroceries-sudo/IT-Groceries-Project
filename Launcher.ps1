@@ -1,64 +1,51 @@
-<#
-.SYNOPSIS
-    IT Groceries Cloud Bootstrapper
-    หน้าที่: โหลด Project ทั้งก้อนจาก GitHub -> แตกไฟล์ลง Temp -> รัน Installer -> ลบทิ้ง
-#>
-$ErrorActionPreference = "SilentlyContinue"
+# =========================================================
+#  FILE: Bootstrapper.ps1 (The Cloud Key)
+# =========================================================
+#  หน้าที่: ดึง Launcher ตัวจริงจาก GitHub มารันใน Memory ทันที
+# =========================================================
 
-# [CONFIG] ลิงก์ Zip ไฟล์ของ GitHub (เปลี่ยนชื่อ Repo ให้ตรงกับของคุณเจ)
-# รูปแบบ: https://github.com/<User>/<Repo>/archive/refs/heads/<Branch>.zip
-$RepoZipURL = "https://github.com/itgroceries-sudo/IT-Groceries-Project/archive/refs/heads/main.zip"
-
-# ตั้งชื่อโฟลเดอร์ชั่วคราว
-$WorkSpace = "$env:TEMP\ITGroceries_Cloud_Install"
-$ZipFile   = "$WorkSpace\Package.zip"
-
-# 1. เตรียมพื้นที่ (ล้างของเก่าถ้ามี)
-Write-Host "[ CLOUD ] Preparing workspace..." -ForegroundColor Cyan
-if (Test-Path $WorkSpace) { Remove-Item $WorkSpace -Recurse -Force }
-New-Item -ItemType Directory -Path $WorkSpace | Out-Null
-
-# 2. ดาวน์โหลด Project ทั้งก้อน (Download)
-Write-Host "[ CLOUD ] Downloading latest version from GitHub..." -ForegroundColor Yellow
-try {
-    # ใช้ TLS 1.2 เพื่อความชัวร์กับ GitHub
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    Invoke-WebRequest -Uri $RepoZipURL -OutFile $ZipFile -UseBasicParsing
-} catch {
-    Write-Host "[ ERROR ] Failed to download repository. Check internet connection." -ForegroundColor Red
+# 1. ขอสิทธิ์ Admin (ถ้ายังไม่มี)
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Requesting Admin Privileges..." -ForegroundColor Yellow
+    Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
     Exit
 }
 
-# 3. แตกไฟล์ (Extract)
-Write-Host "[ CLOUD ] Extracting files..." -ForegroundColor Cyan
+$ErrorActionPreference = 'Stop'
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+# --- [CONFIG] ---
+# ลิงก์ไปยังไฟล์ Launcher.ps1 (แบบ Raw) บน GitHub ของคุณเจ
+# ต้องเป็นลิงก์ "Raw" นะครับ (กดปุ่ม Raw ใน GitHub แล้วก๊อปมา)
+$LauncherUrl = "https://raw.githubusercontent.com/itgroceries-sudo/IT-Groceries-Project/main/Launcher.ps1"
+
+# ลิงก์ไปยัง Master.ps1 (เพื่อให้ Launcher โหลดต่อได้)
+$MasterUrl   = "https://raw.githubusercontent.com/itgroceries-sudo/IT-Groceries-Project/main/bin/Master.ps1"
+
+Write-Host "`n[ CLOUD ] Connecting to IT Groceries Repository..." -ForegroundColor Cyan
+
 try {
-    Expand-Archive -Path $ZipFile -DestinationPath $WorkSpace -Force
-} catch {
-    Write-Host "[ ERROR ] Failed to extract files." -ForegroundColor Red
-    Exit
-}
-
-# 4. หาไฟล์ Installer.cmd (เพราะ GitHub ชอบแตกไฟล์ซ้อนโฟลเดอร์ เช่น Project-main)
-$ExtractedFolder = Get-ChildItem -Path $WorkSpace -Directory | Select-Object -First 1
-$TargetInstaller = "$($ExtractedFolder.FullName)\Installer.cmd"
-
-# 5. สั่งรัน Installer (Execute)
-if (Test-Path $TargetInstaller) {
-    Write-Host "[ CLOUD ] Launching Installer..." -ForegroundColor Green
-    Start-Sleep -Seconds 1
+    # 2. ดึงโค้ด Master.ps1 มาลง Memory ไว้ก่อน (Pre-load Engine)
+    Write-Host " >> Loading Core Engine..." -NoNewline
+    $MasterCode = (Invoke-WebRequest -Uri $MasterUrl -UseBasicParsing).Content
     
-    # สั่งรันและรอจนจบ (-Wait)
-    Start-Process -FilePath $TargetInstaller -ArgumentList "am_admin" -Wait
-} else {
-    Write-Host "[ ERROR ] Installer.cmd not found in the downloaded package!" -ForegroundColor Red
+    # 3. ดึงโค้ด Launcher.ps1 มาลง Memory
+    Write-Host "`n >> Loading Interface..." -NoNewline
+    $LauncherCode = (Invoke-WebRequest -Uri $LauncherUrl -UseBasicParsing).Content
+    
+    Write-Host " [ OK ]" -ForegroundColor Green
+    Start-Sleep -Seconds 1
+
+    # 4. แปลงร่าง! (สั่งรันโค้ดทั้งหมดใน Memory)
+    # เราจะฉีดโค้ด Master เข้าไปแปะหน้า Launcher เลย เพื่อให้มันรู้จักฟังก์ชันทันที
+    $FinalPayload = "$MasterCode`n`n$LauncherCode"
+    
+    # สั่งรัน!
+    Invoke-Expression $FinalPayload
+
+} catch {
+    Write-Host "`n[ ERROR ] Failed to connect to Cloud Repository." -ForegroundColor Red
+    Write-Host "Details: $_" -ForegroundColor Gray
+    Write-Host "Check your internet connection or URL." -ForegroundColor Yellow
+    Read-Host "Press Enter to exit..."
 }
-
-# 6. เก็บกวาดขยะ (Cleanup)
-Write-Host "`n[ CLEANUP ] Removing temporary files..." -ForegroundColor Gray
-Start-Sleep -Seconds 1
-# ลบทั้งโฟลเดอร์ Workspace ทิ้งเลย (เพราะเราโหลดมาใช้ชั่วคราว)
-Remove-Item $WorkSpace -Recurse -Force -ErrorAction SilentlyContinue
-
-Write-Host "[ DONE ] Thank you for using IT Groceries Shop." -ForegroundColor Magenta
-
-
