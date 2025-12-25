@@ -155,7 +155,7 @@ try {
     # Cleanup Icon
     if (Test-Path $IconFile) { Remove-Item $IconFile -Force -ErrorAction SilentlyContinue }
     
-    # Read-Host "Press Enter to exit..." # เปิดบรรทัดนี้ถ้าอยากให้รอปิด
+    Read-Host "Press Enter to exit..." # เปิดบรรทัดนี้ถ้าอยากให้รอปิด
 
 } catch {
     Write-Host "`n"
@@ -163,3 +163,4 @@ try {
     Write-Host "Details: $_" -ForegroundColor Gray
     Read-Host "Press Enter to exit..."
 }
+
