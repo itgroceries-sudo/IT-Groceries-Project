@@ -35,10 +35,11 @@ try {
     Invoke-Expression "$MasterCode`n`n$LauncherCode"
 
 } catch {
-    Write-Host "`n [ ERROR ] Connection Failed!" -ForegroundColor Red
+    Write-Host "`n [ ERROR ] Connection Failed" -ForegroundColor Red
     Write-Host " Details: $_" -ForegroundColor Gray
     Write-Host " Please check your internet connection." -ForegroundColor Yellow
     Read-Host " Press Enter to exit..."
 }
+
 
 
