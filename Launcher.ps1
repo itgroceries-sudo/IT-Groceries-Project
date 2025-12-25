@@ -1,13 +1,13 @@
 # =========================================================
-#  FILE: Bootstrapper.ps1 (Fixed & Debug Ready)
+#  FILE: Bootstrapper.ps1 (Cloud Loader - Debug Mode)
 # =========================================================
 
-# 1. ขอสิทธิ์ Admin
+# 1. ขอ Admin (เพิ่ม -NoExit เพื่อดักดู Error)
 $CurrentPrincipal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
 if (-not $CurrentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Host " [ SYSTEM ] Requesting Administrator Privileges..." -ForegroundColor Yellow
     try {
-        # [FIX 1] เพิ่ม -NoExit เพื่อดักดู Error (ถ้ามันพัง มันจะไม่ปิดหนี)
+        # [FIX] ใส่ -NoExit เพื่อให้หน้าต่าง Admin ค้างไว้ ถ้ามันพังเราจะเห็น Error แดงๆ
         Start-Process powershell -ArgumentList "-NoExit -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
         Exit
     } catch {
@@ -19,18 +19,18 @@ if (-not $CurrentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Adm
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# [FIX 2] เติม $ หน้าตัวแปร (นี่คือตัวการที่ทำให้หายวับ!)
+# [FIX] ใส่ $ หน้าตัวแปร (สำคัญมาก)
 $BaseURL = "https://raw.githubusercontent.com/itgroceries-sudo/IT-Groceries-Project/main"
 
 Write-Host "`n [ CLOUD ] Connecting to IT Groceries Repository..." -ForegroundColor Cyan
 
 try {
-    # 2. โหลด Master Engine
+    # 2. โหลด Master
     Write-Host "    >> Loading Core Engine (Master)..." -NoNewline
     $MasterCode = (Invoke-WebRequest -Uri "$BaseURL/bin/Master.ps1" -UseBasicParsing).Content
     Write-Host " [ OK ]" -ForegroundColor Green
 
-    # 3. โหลด Launcher Interface
+    # 3. โหลด Launcher
     Write-Host "    >> Loading Interface (Launcher)..." -NoNewline
     $LauncherCode = (Invoke-WebRequest -Uri "$BaseURL/Launcher.ps1" -UseBasicParsing).Content
     Write-Host " [ OK ]" -ForegroundColor Green
@@ -42,18 +42,17 @@ try {
     Write-Host "`n [ START ] Launching System..." -ForegroundColor Yellow
     Start-Sleep -Seconds 1
     
-    # 5. รันระบบ
-    # รวมโค้ด Master และ Launcher เข้าด้วยกันแล้วรันใน Memory
+    # 5. รัน!
     Invoke-Expression "$MasterCode`n`n$LauncherCode"
     
-    # กันเหนียว: ถ้า Launcher จบการทำงาน ให้รอ Spacebar ก่อนปิด
-    Write-Host "`n [ INFO ] Application Closed." -ForegroundColor Gray
-    # Read-Host " Press Enter to exit..." 
+    # [Info] ถ้าโปรแกรมจบสวยๆ
+    Write-Host "`n [ INFO ] Application Execution Finished." -ForegroundColor Gray
+    # Read-Host " Press Enter to exit..."
 
 } catch {
     # ถ้ามี Error จะมาตกตรงนี้ และหน้าต่างจะไม่ปิดเพราะเราใส่ -NoExit ไว้ตอนเริ่ม
     Write-Host "`n [ ERROR ] Critical Failure!" -ForegroundColor Red
     Write-Host " Details: $_" -ForegroundColor Gray
-    Write-Host " Please check your internet connection or GitHub URL." -ForegroundColor Yellow
+    Write-Host " Please check your GitHub Code (Master.ps1 need -Recurse)." -ForegroundColor Yellow
     Read-Host " Press Enter to exit..."
 }
