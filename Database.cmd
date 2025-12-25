@@ -80,8 +80,10 @@ set "Name_cpuz=CPU-Z System Info"
 set "P64_cpuz=%ProgramFiles%\CPUID\CPU-Z\cpuz.exe"
 
 set "Name_winrar=WinRAR"
+set "P64_winrar=%ProgramFiles%\WinRAR\WinRar.exe"
 
 set "Name_teams=Microsoft Teams"
+
 
 
 
