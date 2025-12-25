@@ -142,3 +142,4 @@ if exist "%TEMP%\aria2c.exe" del "%TEMP%\aria2c.exe" >nul
 if exist "%TEMP%\Master.ps1" del "%TEMP%\Master.ps1" >nul
 
 exit
+
