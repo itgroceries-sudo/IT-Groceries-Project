@@ -8,6 +8,7 @@ set "SLOT_02=firefox"
 set "SLOT_03=edge"
 :: set "SLOT_04=brave"
 :: set "SLOT_05=opera"
+set "SLOT_04=photoshop"
 
 :: --- [GROUP 2] COMMUNICATION (Slot 06-10) ---
 set "SLOT_06=line"
@@ -46,6 +47,8 @@ set "P32_firefox=%ProgramFiles(x86)%\Mozilla Firefox\firefox.exe"
 set "Name_edge=Microsoft Edge"
 set "P64_edge=%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
 
+set "Name_phoptoshop=PhotoShop 2026"
+
 :: [Communication]
 set "Name_line=LINE PC"
 set "P64_line=%LocalAppData%\LINE\bin\LineLauncher.exe"
@@ -78,3 +81,4 @@ set "P64_cpuz=%ProgramFiles%\CPUID\CPU-Z\cpuz.exe"
 
 
 set "Name_teams=Microsoft Teams"
+
