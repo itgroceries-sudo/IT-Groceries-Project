@@ -93,6 +93,7 @@ try {
     if ($PSCommandPath) { Remove-Item $PSCommandPath -Force }
 } catch {}
 
-Write-Host " [ DONE ] Bye!" -ForegroundColor Green
+Write-Host " [ DONE ] Bye" -ForegroundColor Green
 Start-Sleep -Seconds 1
 Exit
+
