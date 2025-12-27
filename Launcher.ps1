@@ -41,13 +41,14 @@ try { mode con: cols=85 lines=30 } catch {}
 
 # 2.1 Window & Icon
 try {
+    # [FIXED HERE] เพิ่ม ShowWindow เข้าไปใน Definition
     $def = @'
     [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr h,int n);
     [DllImport("user32.dll")] public static extern int SetWindowLong(IntPtr h,int n,int w);
     [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h,IntPtr i,int x,int y,int cx,int cy,uint f);
     [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
     [DllImport("user32.dll")] public static extern IntPtr LoadImage(IntPtr hinst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);
-	[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
     [DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow();
 '@
     $win32 = Add-Type -MemberDefinition $def -Name 'Win32Tools' -Namespace Win32 -PassThru
@@ -100,7 +101,7 @@ function Show-Spinner {
     $host.UI.RawUI.CursorPosition = $OriginalPos
     Write-Host $Pad -NoNewline
     Write-Host "[ OK ] " -ForegroundColor Green -NoNewline
-    Write-Host "$Text (Done)     " -ForegroundColor DarkGray
+    Write-Host "$Text (Done)      " -ForegroundColor DarkGray
     Write-Host ""
 }
 
@@ -195,22 +196,21 @@ if (Test-Path $InstallerFile) {
     Type-Writer ">>> LET'S GOOOO !!! <<<" "Cyan" 50
     Start-Sleep -Milliseconds 1500
     
-    # Launch Installer.cmd (และส่ง parameter am_admin)
-    
-    # [ADDED] สั่งย่อหน้าต่าง (2 = Minimize)
-    $win32::ShowWindow($hwnd, 2) 
+    # [FIXED HERE] Minimize Window (2 = SW_SHOWMINIMIZED)
+    $win32::ShowWindow($hwnd, 2)
 
+    # Launch Installer.cmd (และส่ง parameter am_admin)
     Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$InstallerFile`" am_admin" -Wait
     
-    # [ADDED] สั่งคืนค่าหน้าต่างเมื่อทำงานเสร็จ (9 = Restore)
+    # [FIXED HERE] Restore Window (9 = SW_RESTORE) เผื่อจะโชว์สถานะตอนปิด
     $win32::ShowWindow($hwnd, 9)
-    
+
     # --- [STEP 7] CLEANUP (ตามคำขอเป๊ะๆ) ---
     try { if (Test-Path $InstallerFile) { Remove-Item $InstallerFile -Force -ErrorAction SilentlyContinue } } catch {}
     try { if (Test-Path $TargetFile) { Remove-Item $TargetFile -Force -ErrorAction SilentlyContinue } } catch {}
     try { if (Test-Path $LauncherFile) { Remove-Item $LauncherFile -Force -ErrorAction SilentlyContinue } } catch {}
     try { if (Test-Path $IconFile) { Remove-Item $IconFile -Force -ErrorAction SilentlyContinue } } catch {}
-	try { if (Test-Path $DatabaseFile) { Remove-Item $DatabaseFile -Force -ErrorAction SilentlyContinue } } catch {}
+    try { if (Test-Path $DatabaseFile) { Remove-Item $DatabaseFile -Force -ErrorAction SilentlyContinue } } catch {}
     # แถม: ลบโฟลเดอร์ bin ที่สร้างไว้ด้วย เพื่อความสะอาดหมดจด
     try { if (Test-Path "$tmpDir\bin") { Remove-Item "$tmpDir\bin" -Recurse -Force -ErrorAction SilentlyContinue } } catch {}
     
@@ -219,4 +219,3 @@ if (Test-Path $InstallerFile) {
     Write-Host "Error: $_" -ForegroundColor Red
     Start-Sleep 3
 }
-
