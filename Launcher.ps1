@@ -1,20 +1,21 @@
 # =========================================================
-#  IT Groceries Shop Launcher (v10.0 - GitHub Blockbuster)
+#  IT Groceries Shop Launcher (v10.1 - Stable Anti-Flash)
 # =========================================================
 param([switch]$IsLegacyMode)
-$ErrorActionPreference = 'SilentlyContinue'
+# [FIX 1] เปลี่ยนเป็น Stop ชั่วคราว เพื่อให้รู้ว่าพังตรงไหน (เดี๋ยวปรับกลับข้างล่าง)
+$ErrorActionPreference = 'Stop' 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# [CONFIG] เปลี่ยน BaseURL เป็น GitHub (Raw)
-$BaseURL = "https://raw.githubusercontent.com/itgroceries-sudo/IT-Groceries-AiO-Project/main"
+# [CONFIG] เช็ค URL นี้ดีๆ นะครับ ถ้า URL ผิด มันจะโหลดไม่ได้แล้วปิดเลย
+$BaseURL = "https://raw.githubusercontent.com/itgroceries-sudo/IT-Groceries-Project/main"
 $tmpDir  = "$env:TEMP"
 
 # สุ่มชื่อไฟล์ Launcher (กันไฟล์ซ้ำ)
 $RandomID = -join ((48..57) | Get-Random -Count 4 | % {[char]$_})
 $LauncherFile = "$tmpDir\ITG_Launcher_$RandomID.ps1"
-$IconFile = "$tmpDir\ITGBlog.ico" # เปลี่ยนตามข้อ 2
+$IconFile = "$tmpDir\ITGBlog.ico"
 
-# สร้างโฟลเดอร์ bin ใน Temp รอไว้เลย (เพื่อให้ Installer.cmd มองเห็น)
+# สร้างโฟลเดอร์ bin ใน Temp รอไว้เลย
 if (-not (Test-Path "$tmpDir\bin")) { New-Item -ItemType Directory -Path "$tmpDir\bin" -Force | Out-Null }
 
 # --- [STEP 0] SELF-HIDE ---
@@ -24,20 +25,35 @@ if ($PSCommandPath -and (Test-Path $PSCommandPath)) {
 
 # --- [STEP 1] ADMIN CHECK ---
 $IsAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $PSCommandPath -or -not $IsAdmin) {
+
+if (-not $IsAdmin) {
     # ถ้าไม่ใช่ Admin ให้โหลดตัวเองใหม่แล้วรันเป็น Admin
+    $TargetFile = $PSCommandPath
+    
     if (-not $PSCommandPath) { 
-        try { Invoke-WebRequest -Uri "$BaseURL/Launcher.ps1" -OutFile $LauncherFile -UseBasicParsing } catch { exit } 
-        $TargetFile = $LauncherFile 
-    } else { 
-        $TargetFile = $PSCommandPath 
+        # กรณีรันผ่าน iex (ไม่มีไฟล์จริง) ต้องโหลดลง Temp ก่อน
+        try { 
+            Write-Host "Downloading Launcher components..." -ForegroundColor Yellow
+            Invoke-WebRequest -Uri "$BaseURL/Launcher.ps1" -OutFile $LauncherFile -UseBasicParsing 
+            $TargetFile = $LauncherFile
+        } catch { 
+            Write-Host "Critical Error: Cannot download Launcher from GitHub!" -ForegroundColor Red
+            Write-Host "URL: $BaseURL/Launcher.ps1" -ForegroundColor Gray
+            Pause; exit 
+        } 
     }
-    Start-Process PowerShell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$TargetFile`"" -Verb RunAs; exit
+    
+    # [FIX 2] ใส่ -NoExit เพื่อให้หน้าต่าง Admin ไม่ปิดหนีถ้ามี Error
+    Start-Process PowerShell -ArgumentList "-NoExit -NoProfile -ExecutionPolicy Bypass -File `"$TargetFile`"" -Verb RunAs
+    exit
 }
+
+# กลับมาใช้ SilentlyContinue เพื่อความเนียนในการทำงานต่อ
+$ErrorActionPreference = 'SilentlyContinue'
 
 # --- [STEP 2] VISUAL HELPERS ---
 $Host.UI.RawUI.WindowTitle = "IT Groceries Launcher ($RandomID) | $(Get-Date -Format 'dd-MM-yyyy')"
-try { mode con: cols=85 lines=25 } catch {}
+try { mode con: cols=85 lines=30 } catch {}
 
 # 2.1 Window & Icon
 try {
@@ -99,7 +115,7 @@ function Show-Spinner {
     $host.UI.RawUI.CursorPosition = $OriginalPos
     Write-Host $Pad -NoNewline
     Write-Host "[ OK ] " -ForegroundColor Green -NoNewline
-    Write-Host "$Text (Done)     " -ForegroundColor DarkGray
+    Write-Host "$Text (Done)      " -ForegroundColor DarkGray
     Write-Host ""
 }
 
@@ -113,14 +129,14 @@ Draw-Center "===================================================================
 Write-Host "`n"
 
 # [UI] Message Body
-Write-Host "    This software is provided as FREEWARE for educational usage." -ForegroundColor Yellow
-Write-Host "    Crafted with dedication to streamline your workflow." -ForegroundColor Gray
-Write-Host "    "
-Write-Host "    If you find this tool helpful, please Support Us by" -ForegroundColor White
-Write-Host "    Subscribing to our YouTube Channel: " -NoNewline -ForegroundColor White
+Write-Host "     This software is provided as FREEWARE for educational usage." -ForegroundColor Yellow
+Write-Host "     Crafted with dedication to streamline your workflow." -ForegroundColor Gray
+Write-Host "     "
+Write-Host "     If you find this tool helpful, please Support Us by" -ForegroundColor White
+Write-Host "     Subscribing to our YouTube Channel: " -NoNewline -ForegroundColor White
 Write-Host "IT Groceries" -ForegroundColor Green
-Write-Host "    "
-Write-Host "    Your support drives our future updates. Thank you!          " -ForegroundColor Magenta
+Write-Host "     "
+Write-Host "     Your support drives our future updates. Thank you!           " -ForegroundColor Magenta
 Write-Host "`n"
 
 $PadInput = " " * 25
@@ -136,7 +152,7 @@ Start-Sleep -Milliseconds 200
 Show-Spinner "Establishing Secure Connection..." 15 "Cyan"
 
 $InstID = -join ((48..57) | Get-Random -Count 4 | % {[char]$_})
-$InstallerFile = "$tmpDir\Installer.cmd" # ใช้ชื่อนี้เพื่อให้ Path ตรงกัน
+$InstallerFile = "$tmpDir\Installer.cmd"
 
 # รายการไฟล์ที่จะโหลด (Mapping GitHub -> Local Temp)
 $Assets = @(
@@ -149,7 +165,6 @@ $Assets = @(
     @{ Url="$BaseURL/bin/Theme.cmd";      Dest="$tmpDir\bin\Theme.cmd";    Msg="Loading Theme..." },
     @{ Url="$BaseURL/bin/Menu.cmd";       Dest="$tmpDir\bin\Menu.cmd";     Msg="Loading Menu..." },
     @{ Url="$BaseURL/bin/ITGBlog.ico";    Dest="$tmpDir\bin\ITGBlog.ico";  Msg="Loading Icon..." }
-    # Google.ico ไม่ต้องโหลดก็ได้ ถ้า Installer ใช้ ITGBlog.ico เหมือนกัน
 )
 
 foreach ($item in $Assets) {
@@ -161,20 +176,13 @@ foreach ($item in $Assets) {
 }
 
 # --- [STEP 5] ARIA2C MANAGER (Auto Download Zip) ---
-# ทำตามข้อ 7: ลบ aria2c.exe จาก git แล้วโหลด zip มาแตกแทน
-# Installer.cmd ปกติจะหา bin\aria2c.exe ดังนั้นเราต้องย้ายไปที่ bin
 $AriaPath = "$tmpDir\bin\aria2c.exe"
-
 if (-not (Test-Path $AriaPath)) {
     Show-Spinner "Fetching High-Speed Module (Aria2)..." 12 "Magenta"
     try {
         Invoke-WebRequest "https://github.com/aria2/aria2/releases/download/release-1.37.0/aria2-1.37.0-win-64bit-build1.zip" -OutFile "$tmpDir\aria2.zip"
         Expand-Archive "$tmpDir\aria2.zip" -Dest "$tmpDir\aria2_extract" -Force
-        
-        # ย้ายไฟล์ exe เข้า bin
         Move-Item "$tmpDir\aria2_extract\aria2-*\aria2c.exe" "$tmpDir\bin\aria2c.exe" -Force
-        
-        # ลบขยะจากการแตกไฟล์
         Remove-Item "$tmpDir\aria2.zip", "$tmpDir\aria2_extract" -Recurse -Force
         (Get-Item $AriaPath).Attributes = 'Hidden'
     } catch {}
@@ -194,15 +202,14 @@ if (Test-Path $InstallerFile) {
     Type-Writer ">>> LET'S GOOOO !!! <<<" "Cyan" 50
     Start-Sleep -Milliseconds 1500
     
-    # Launch Installer.cmd (และส่ง parameter am_admin)
+    # Launch Installer.cmd
     Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$InstallerFile`" am_admin" -Wait
     
-    # --- [STEP 7] CLEANUP (ตามคำขอเป๊ะๆ) ---
+    # --- [STEP 7] CLEANUP ---
     try { if (Test-Path $InstallerFile) { Remove-Item $InstallerFile -Force -ErrorAction SilentlyContinue } } catch {}
     try { if (Test-Path $TargetFile) { Remove-Item $TargetFile -Force -ErrorAction SilentlyContinue } } catch {}
     try { if (Test-Path $LauncherFile) { Remove-Item $LauncherFile -Force -ErrorAction SilentlyContinue } } catch {}
     try { if (Test-Path $IconFile) { Remove-Item $IconFile -Force -ErrorAction SilentlyContinue } } catch {}
-    # แถม: ลบโฟลเดอร์ bin ที่สร้างไว้ด้วย เพื่อความสะอาดหมดจด
     try { if (Test-Path "$tmpDir\bin") { Remove-Item "$tmpDir\bin" -Recurse -Force -ErrorAction SilentlyContinue } } catch {}
     
     exit
