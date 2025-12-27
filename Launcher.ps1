@@ -6,7 +6,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # [CONFIG] เปลี่ยน BaseURL เป็น GitHub (Raw)
-$BaseURL = "https://raw.githubusercontent.com/itgroceries-sudo/IT-Groceries-Project/main"
+$BaseURL = "https://raw.githubusercontent.com/itgroceries-sudo/IT-Groceries-AiO-Project/main"
 $tmpDir  = "$env:TEMP"
 
 # สุ่มชื่อไฟล์ Launcher (กันไฟล์ซ้ำ)
@@ -36,7 +36,7 @@ if (-not $PSCommandPath -or -not $IsAdmin) {
 }
 
 # --- [STEP 2] VISUAL HELPERS ---
-$Host.UI.RawUI.WindowTitle = "IT Groceries Launcher ($RandomID)"
+$Host.UI.RawUI.WindowTitle = "IT Groceries Launcher ($RandomID) | $(Get-Date -Format 'dd-MM-yyyy')"
 try { mode con: cols=85 lines=25 } catch {}
 
 # 2.1 Window & Icon
@@ -110,6 +110,17 @@ Draw-Center "===================================================================
 Draw-Center "AiO ( Freeware Silent Installer ) [ GitHub UI ]" "White" "DarkCyan"
 Draw-Center "Powered by IT Groceries Shop" "Cyan"
 Draw-Center "=====================================================================================" "DarkCyan"
+Write-Host "`n"
+
+# [UI] Message Body
+Write-Host "    This software is provided as FREEWARE for educational usage." -ForegroundColor Yellow
+Write-Host "    Crafted with dedication to streamline your workflow." -ForegroundColor Gray
+Write-Host "    "
+Write-Host "    If you find this tool helpful, please Support Us by" -ForegroundColor White
+Write-Host "    Subscribing to our YouTube Channel: " -NoNewline -ForegroundColor White
+Write-Host "IT Groceries" -ForegroundColor Green
+Write-Host "    "
+Write-Host "    Your support drives our future updates. Thank you!          " -ForegroundColor Magenta
 Write-Host "`n"
 
 $PadInput = " " * 25
