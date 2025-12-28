@@ -21,7 +21,7 @@ set "Black=%ESC%[30m" & set "Cyan=%ESC%[36m" & set "White=%ESC%[37m"
 ::  4. จัดการ ICON (AUTO DOWNLOAD)
 :: =========================================================
 set "ICON_URL=https://itgroceries.blogspot.com/favicon.ico"
-set "ICON_FILE=%TEMP%\ITGBlog.ico"
+set "ICON_FILE=%TEMP%\bin\ITGBlog.ico"
 
 :: 4.1 ถ้าไม่มีไฟล์ใน Temp ให้โหลดจาก Blogspot
 if not exist "%ICON_FILE%" (
