@@ -5,7 +5,7 @@
 $ShortcutPattern = "YouTube*.lnk"
 
 # User Agent สำหรับจำลอง Smart TV
-$UserAgentString = "Mozilla/5.0 (SMART-TV; Linux; Tizen 2.4.0) AppleWebkit/538.1 (KHTML, like Gecko) SamsungBrowser/1.0 TV Safari/538.1"
+$UserAgentString = "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/4.0 Chrome/76.0.3809.146 TV Safari/537.36"
 
 # หา path ของ Desktop ของผู้ใช้ปัจจุบัน
 $DesktopPath = [System.Environment]::GetFolderPath('Desktop')
@@ -41,7 +41,7 @@ else {
 # ขั้นตอนที่ 2: เปิดลิงก์ด้วย Browser ที่เลือก
 # ---------------------------------------------------------
 Write-Host "`n[STEP 2] Launching YouTube TV..." -ForegroundColor Cyan
-Start-Process -FilePath $SelectedBrowser -ArgumentList "https://youtube.com/tv" --profile-directory=Default --app-id=agimnkijcaahngcdmfeangaknmldooml --user-agent="Mozilla/5.0 (SMART-TV; Linux; Tizen 2.4.0) AppleWebkit/538.1 (KHTML, like Gecko) SamsungBrowser/1.0 TV Safari/538.1"
+Start-Process -FilePath $SelectedBrowser -ArgumentList "https://youtube.com/tv" --profile-directory=Default --app-id=agimnkijcaahngcdmfeangaknmldooml --user-agent="Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/4.0 Chrome/76.0.3809.146 TV Safari/537.36"
 
 Write-Host "========================================================" -ForegroundColor Yellow
 Write-Host " PLEASE INSTALL THE APP FROM BROWSER NOW!"
