@@ -41,7 +41,7 @@ else {
 # ขั้นตอนที่ 2: เปิดลิงก์ด้วย Browser ที่เลือก
 # ---------------------------------------------------------
 Write-Host "`n[STEP 2] Launching YouTube TV..." -ForegroundColor Cyan
-Start-Process -FilePath $SelectedBrowser -ArgumentList "https://youtube.com/tv"
+Start-Process -FilePath $SelectedBrowser -ArgumentList "https://youtube.com/tv" --profile-directory=Default --app-id=agimnkijcaahngcdmfeangaknmldooml --user-agent="Mozilla/5.0 (SMART-TV; Linux; Tizen 2.4.0) AppleWebkit/538.1 (KHTML, like Gecko) SamsungBrowser/1.0 TV Safari/538.1"
 
 Write-Host "========================================================" -ForegroundColor Yellow
 Write-Host " PLEASE INSTALL THE APP FROM BROWSER NOW!"
