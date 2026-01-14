@@ -1,64 +1,64 @@
 # ==========================================
-# YouTube on TV Installer (Brave Edition)
+# YouTube on TV Installer (Embedded Icon)
 # Created by: IT Groceries Shop
 # ==========================================
 
-Write-Host "Checking Brave Installation..." -ForegroundColor Cyan
+Write-Host "Checking Browser Installation..." -ForegroundColor Cyan
 
-# 1. ค้นหาที่อยู่ของ Brave Browser (รองรับทั้ง 64bit และ 32bit)
-$BravePath = "$env:ProgramFiles\BraveSoftware\Brave-Browser\Application\brave.exe"
-if (-not (Test-Path $BravePath)) {
-    $BravePath = "${env:ProgramFiles(x86)}\BraveSoftware\Brave-Browser\Application\brave.exe"
+# --- 1. ตรวจสอบ Browser (Priority: Brave -> Chrome) ---
+$BrowserPath = $null
+$BrowserName = ""
+$UserDataBase = ""
+
+# Path ที่เป็นไปได้
+$BravePaths = @("$env:ProgramFiles\BraveSoftware\Brave-Browser\Application\brave.exe", "${env:ProgramFiles(x86)}\BraveSoftware\Brave-Browser\Application\brave.exe", "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\Application\brave.exe")
+$ChromePaths = @("$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe", "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe")
+
+# เช็ค Brave
+foreach ($path in $BravePaths) { if (Test-Path $path) { $BrowserPath = $path; $BrowserName = "Brave"; $UserDataBase = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data"; break } }
+
+# ถ้าไม่มี Brave เช็ค Chrome
+if (-not $BrowserPath) {
+    foreach ($path in $ChromePaths) { if (Test-Path $path) { $BrowserPath = $path; $BrowserName = "Chrome"; $UserDataBase = "$env:LOCALAPPDATA\Google\Chrome\User Data"; break } }
 }
 
-if (-not (Test-Path $BravePath)) {
-    Write-Error "Error: Brave Browser not found! Please install Brave first."
-    return
-}
-Write-Host "Found Brave at: $BravePath" -ForegroundColor Green
+if (-not $BrowserPath) { Write-Error "Error: No supported browser found."; Start-Sleep -Seconds 5; return }
+Write-Host "Found Browser: $BrowserName" -ForegroundColor Green
 
-# 2. กำหนดค่าตัวแปรต่างๆ
+# --- 2. ตั้งค่า Path ---
 $AppName = "YouTube on TV"
-$ProfileDir = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\YouTubeTV_Mode"
+$ProfileDir = "$UserDataBase\YouTubeTV_Mode"
 $IconPath = "$ProfileDir\youtube_tv.ico"
 $ShortcutPath = "$env:USERPROFILE\Desktop\$AppName.lnk"
-
-# User Agent (Tizen 6.0) ตัวที่เสถียรที่สุด
 $UserAgent = "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/4.0 Chrome/76.0.3809.146 TV Safari/537.36"
 
-# 3. สร้างโฟลเดอร์สำหรับเก็บข้อมูลแยก (ถ้ายังไม่มี)
-if (-not (Test-Path $ProfileDir)) {
-    New-Item -ItemType Directory -Force -Path $ProfileDir | Out-Null
-}
+# สร้างโฟลเดอร์ Profile (ถ้ายังไม่มี)
+if (-not (Test-Path $ProfileDir)) { New-Item -ItemType Directory -Force -Path $ProfileDir | Out-Null }
 
-# 4. ดาวน์โหลดไอคอนสวยๆ (ถ้ายังไม่มี)
-# ใช้ไอคอนจาก Server ภายนอกเพื่อให้ชัดกว่า Default ของ Browser
-$IconUrl = "https://cdn-icons-png.flaticon.com/512/1384/1384060.png" # ตัวอย่าง URL ไอคอน
-# หมายเหตุ: PowerShell สร้าง .lnk ต้องการไฟล์ .ico ถ้าโหลด .png มาอาจต้องแปลง หรือใช้ Path ของ exe แทนถ้าไม่มี
-# เพื่อความง่ายและเสถียรใน GitHub Script ผมจะใช้เทคนิคดึงไอคอนจากเว็บที่แปลงให้แล้ว หรือใช้ไอคอน Brave ไปก่อนถ้าโหลดไม่ได้
+# --- 3. สร้างไฟล์ไอคอนจาก Base64 (ไม่ต้องโหลด) ---
+Write-Host "Generating Icon..." -ForegroundColor Cyan
+# นี่คือรหัสรูปภาพไอคอน YouTube (แปลงมาให้แล้ว)
+$Base64Icon = "AAABAAAAEAgAAAEAIACICQAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAkAABXfAAAV3wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAL+/v//p6en/6enp/+np6f/p6en/6enp/+np6f/p6en/6enp/+np6f/p6en/v7+//wAAAAAAAAAAAAAAAAAAAAAA6enp//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3/+np6f8AAAAAAAAAAAAAAAAAAAAAAL+/v//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/v7+//wAAAAAAAAAAAAAAAKqqqv/p6en/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/6enp/6qqqv8AAAAAAAAAAAAAAAC/v7//9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39/+/v7//AAAAAAAAAAAAAAAAv7+//+np6f/39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//p6en/v7+//wAAAAAAAAAAAAAAAL+/v//39/f/9/f3//f39/8zMzP/MzMz/zMzM/8zMzP/9/f3//f39//39/f/9/f3/7+/v/8AAAAAAAAAAAAAAAC/v7//9/f3//f39//39/f/MzMz/zMzM/8zMzP/MzMz//f39//39/f/9/f3//f39/+/v7//AAAAAAAAAAAAAAAAv7+//+np6f/39/f/9/f3/zMzM/8zMzP/MzMz/zMzM//39/f/9/f3//f39//p6en/v7+//wAAAAAAAAAAAAAAAL+/v//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/v7+//wAAAAAAAAAAAAAAAKqqqv/p6en/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/6enp/6qqqv8AAAAAAAAAAAAAAAC/v7//9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3/+/v7//AAAAAAAAAAAAAAAAAAAAAADp6en/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/6enp/wAAAAAAAAAAAAAAAAAAAAAAv7+//+np6f/p6en/6enp/+np6f/p6en/6enp/+np6f/p6en/6enp/+np6f+/v7//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
-Write-Host "Downloading Custom Icon..." -ForegroundColor Cyan
+# เขียนไฟล์ .ico ลงเครื่อง
 try {
-    # ดาวน์โหลดไฟล์ .ico (ลิงก์ตรงสำหรับ Icon YouTube แบบ .ico)
-    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/gist/phattarachai/0d8e8c8/raw/youtube.ico" -OutFile $IconPath -ErrorAction Stop
+    $IconBytes = [System.Convert]::FromBase64String($Base64Icon)
+    [System.IO.File]::WriteAllBytes($IconPath, $IconBytes)
 } catch {
-    Write-Warning "Could not download custom icon. Using Brave icon instead."
-    $IconPath = $BravePath # Fallback ไปใช้ไอคอน Brave
+    Write-Warning "Failed to create icon file. Using browser default."
+    $IconPath = $BrowserPath
 }
 
-# 5. สร้าง Shortcut (COM Object Method)
-Write-Host "Creating Desktop Shortcut..." -ForegroundColor Cyan
+# --- 4. สร้าง Shortcut ---
+Write-Host "Creating Shortcut..." -ForegroundColor Cyan
 $WshShell = New-Object -ComObject WScript.Shell
 $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
 
-$Shortcut.TargetPath = $BravePath
-# ใส่ Argument ยาวๆ ทั้งหมดที่นี่
+$Shortcut.TargetPath = $BrowserPath
 $Shortcut.Arguments = "--user-data-dir=""$ProfileDir"" --app=https://www.youtube.com/tv --disable-features=CalculateNativeWinOcclusion --user-agent=""$UserAgent"""
 $Shortcut.IconLocation = $IconPath
-$Shortcut.Description = "Open YouTube in TV Mode"
+$Shortcut.Description = "YouTube on TV ($BrowserName)"
 $Shortcut.Save()
 
-Write-Host "==========================================" -ForegroundColor Green
 Write-Host "Success! Shortcut created on Desktop." -ForegroundColor Green
-Write-Host "Please open '$AppName' and link your phone." -ForegroundColor Yellow
-Write-Host "==========================================" -ForegroundColor Green
+Start-Sleep -Seconds 2
