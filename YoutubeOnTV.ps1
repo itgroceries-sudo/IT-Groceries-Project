@@ -1,5 +1,5 @@
 # ==========================================
-# YouTube on TV Installer (Embedded Icon)
+# YouTube on TV Installer (Final Version)
 # Created by: IT Groceries Shop
 # ==========================================
 
@@ -33,32 +33,50 @@ $ShortcutPath = "$env:USERPROFILE\Desktop\$AppName.lnk"
 $UserAgent = "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/4.0 Chrome/76.0.3809.146 TV Safari/537.36"
 
 # สร้างโฟลเดอร์ Profile (ถ้ายังไม่มี)
-if (-not (Test-Path $ProfileDir)) { New-Item -ItemType Directory -Force -Path $ProfileDir | Out-Null }
+if (-not (Test-Path $ProfileDir)) { 
+    Write-Host "Creating Profile Directory..." -ForegroundColor Gray
+    New-Item -ItemType Directory -Force -Path $ProfileDir | Out-Null 
+}
 
-# --- 3. สร้างไฟล์ไอคอนจาก Base64 (ไม่ต้องโหลด) ---
-Write-Host "Generating Icon..." -ForegroundColor Cyan
-# นี่คือรหัสรูปภาพไอคอน YouTube (แปลงมาให้แล้ว)
-$Base64Icon = "AAABAAAAEAgAAAEAIACICQAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAkAABXfAAAV3wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAL+/v//p6en/6enp/+np6f/p6en/6enp/+np6f/p6en/6enp/+np6f/p6en/v7+//wAAAAAAAAAAAAAAAAAAAAAA6enp//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3/+np6f8AAAAAAAAAAAAAAAAAAAAAAL+/v//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/v7+//wAAAAAAAAAAAAAAAKqqqv/p6en/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/6enp/6qqqv8AAAAAAAAAAAAAAAC/v7//9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39/+/v7//AAAAAAAAAAAAAAAAv7+//+np6f/39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//p6en/v7+//wAAAAAAAAAAAAAAAL+/v//39/f/9/f3//f39/8zMzP/MzMz/zMzM/8zMzP/9/f3//f39//39/f/9/f3/7+/v/8AAAAAAAAAAAAAAAC/v7//9/f3//f39//39/f/MzMz/zMzM/8zMzP/MzMz//f39//39/f/9/f3//f39/+/v7//AAAAAAAAAAAAAAAAv7+//+np6f/39/f/9/f3/zMzM/8zMzP/MzMz/zMzM//39/f/9/f3//f39//p6en/v7+//wAAAAAAAAAAAAAAAL+/v//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/v7+//wAAAAAAAAAAAAAAAKqqqv/p6en/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/6enp/6qqqv8AAAAAAAAAAAAAAAC/v7//9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/9/f3/+/v7//AAAAAAAAAAAAAAAAAAAAAADp6en/9/f3//f39//39/f/9/f3//f39//39/f/9/f3//f39//39/f/6enp/wAAAAAAAAAAAAAAAAAAAAAAv7+//+np6f/p6en/6enp/+np6f/p6en/6enp/+np6f/p6en/6enp/+np6f+/v7//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+# --- 3. ดาวน์โหลดไอคอน (ใช้แหล่งที่เชื่อถือได้) ---
+Write-Host "Downloading Icon..." -ForegroundColor Cyan
 
-# เขียนไฟล์ .ico ลงเครื่อง
+# แหล่งที่มาของไอคอน:
+# 1. favicon.ico ของ YouTube โดยตรง (ขนาดเล็กหน่อย แต่ชัวร์)
+# 2. ถ้าโหลดไม่ได้ จะใช้ไอคอนของ Browser แทน
+$IconUrl = "https://www.youtube.com/favicon.ico" 
+
 try {
-    $IconBytes = [System.Convert]::FromBase64String($Base64Icon)
-    [System.IO.File]::WriteAllBytes($IconPath, $IconBytes)
+    # สั่งให้รองรับ TLS 1.2 (เผื่อ Windows เวอร์ชั่นเก่าโหลดไม่ได้)
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    
+    # ดาวน์โหลดไฟล์
+    Invoke-WebRequest -Uri $IconUrl -OutFile $IconPath -UseBasicParsing -ErrorAction Stop
+    Write-Host "Icon downloaded successfully." -ForegroundColor Green
 } catch {
-    Write-Warning "Failed to create icon file. Using browser default."
+    Write-Warning "Failed to download icon. Error details below:"
+    Write-Warning $_.Exception.Message
+    Write-Warning "Using Browser icon as fallback."
     $IconPath = $BrowserPath
 }
 
 # --- 4. สร้าง Shortcut ---
-Write-Host "Creating Shortcut..." -ForegroundColor Cyan
-$WshShell = New-Object -ComObject WScript.Shell
-$Shortcut = $WshShell.CreateShortcut($ShortcutPath)
+Write-Host "Creating Desktop Shortcut..." -ForegroundColor Cyan
+try {
+    $WshShell = New-Object -ComObject WScript.Shell
+    $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
+    
+    $Shortcut.TargetPath = $BrowserPath
+    $Shortcut.Arguments = "--user-data-dir=""$ProfileDir"" --app=https://www.youtube.com/tv --disable-features=CalculateNativeWinOcclusion --user-agent=""$UserAgent"""
+    $Shortcut.IconLocation = $IconPath
+    $Shortcut.Description = "YouTube on TV ($BrowserName)"
+    $Shortcut.Save()
+    
+    Write-Host "==========================================" -ForegroundColor Green
+    Write-Host "Success! Shortcut created on Desktop." -ForegroundColor Green
+    Write-Host "==========================================" -ForegroundColor Green
+} catch {
+    Write-Error "Failed to create shortcut: $($_.Exception.Message)"
+}
 
-$Shortcut.TargetPath = $BrowserPath
-$Shortcut.Arguments = "--user-data-dir=""$ProfileDir"" --app=https://www.youtube.com/tv --disable-features=CalculateNativeWinOcclusion --user-agent=""$UserAgent"""
-$Shortcut.IconLocation = $IconPath
-$Shortcut.Description = "YouTube on TV ($BrowserName)"
-$Shortcut.Save()
-
-Write-Host "Success! Shortcut created on Desktop." -ForegroundColor Green
 Start-Sleep -Seconds 2
