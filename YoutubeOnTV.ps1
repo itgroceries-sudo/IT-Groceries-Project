@@ -1,58 +1,104 @@
-# ==========================================
-# YouTube on TV Installer (High-Res Edition)
-# Created by: IT Groceries Shop
-# ==========================================
+# ---------------------------------------------------------
+# การตั้งค่า (Configuration)
+# ---------------------------------------------------------
+# ชื่อไฟล์ Shortcut ที่คาดว่าจะเกิดขึ้น
+$ShortcutPattern = "YouTube*.lnk"
 
-Write-Host "Checking Browser Installation..." -ForegroundColor Cyan
+# User Agent สำหรับจำลอง Smart TV
+$UserAgentString = "Mozilla/5.0 (SMART-TV; Linux; Tizen 2.4.0) AppleWebkit/538.1 (KHTML, like Gecko) SamsungBrowser/1.0 TV Safari/538.1"
 
-# --- 1. ตรวจสอบ Browser ---
-$BrowserPath = $null; $BrowserName = ""; $UserDataBase = ""
-$BravePaths = @("$env:ProgramFiles\BraveSoftware\Brave-Browser\Application\brave.exe", "${env:ProgramFiles(x86)}\BraveSoftware\Brave-Browser\Application\brave.exe", "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\Application\brave.exe")
-$ChromePaths = @("$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe", "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe")
+# หา path ของ Desktop ของผู้ใช้ปัจจุบัน
+$DesktopPath = [System.Environment]::GetFolderPath('Desktop')
 
-foreach ($path in $BravePaths) { if (Test-Path $path) { $BrowserPath = $path; $BrowserName = "Brave"; $UserDataBase = "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data"; break } }
-if (-not $BrowserPath) { foreach ($path in $ChromePaths) { if (Test-Path $path) { $BrowserPath = $path; $BrowserName = "Chrome"; $UserDataBase = "$env:LOCALAPPDATA\Google\Chrome\User Data"; break } } }
+# ---------------------------------------------------------
+# ขั้นตอนที่ 1: ตรวจสอบและเลือก Browser (Brave > Chrome)
+# ---------------------------------------------------------
+Write-Host "[STEP 1] Checking for compatible browsers..." -ForegroundColor Cyan
 
-if (-not $BrowserPath) { Write-Error "Error: No supported browser found."; Start-Sleep -Seconds 5; return }
-Write-Host "Found Browser: $BrowserName" -ForegroundColor Green
+# กำหนด Path มาตรฐานของ Brave และ Chrome
+$BravePath = "$env:ProgramFiles\BraveSoftware\Brave-Browser\Application\brave.exe"
+$ChromePath = "$env:ProgramFiles\Google\Chrome\Application\chrome.exe"
+$SelectedBrowser = $null
 
-# --- 2. ตั้งค่า Path ---
-$AppName = "YouTube on TV"
-$ProfileDir = "$UserDataBase\YouTubeTV_Mode"
-$IconPath = "$ProfileDir\youtube_tv.ico"
-$ShortcutPath = "$env:USERPROFILE\Desktop\$AppName.lnk"
-$UserAgent = "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/4.0 Chrome/76.0.3809.146 TV Safari/537.36"
-
-if (-not (Test-Path $ProfileDir)) { New-Item -ItemType Directory -Force -Path $ProfileDir | Out-Null }
-
-# --- 3. ดาวน์โหลดไอคอน (High-Res) ---
-Write-Host "Downloading High-Res Icon..." -ForegroundColor Cyan
-
-# URL นี้เป็นไฟล์ .ico ที่รวมหลายขนาดไว้ (ตั้งแต่ 16px ถึง 256px) ชัดแน่นอนครับ
-$HiResIconUrl = "https://raw.githubusercontent.com/nancy-kataria/youtube-clone/gh-pages/Youtube.ico"
-
-try {
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    # โหลดแบบ Force เขียนทับไฟล์เดิม (เผื่อไฟล์เดิมเป็นตัวไม่ชัด)
-    Invoke-WebRequest -Uri $HiResIconUrl -OutFile $IconPath -UseBasicParsing -ErrorAction Stop
-    Write-Host "Icon downloaded successfully." -ForegroundColor Green
-} catch {
-    Write-Warning "Failed to download High-Res icon. Using Browser icon."
-    $IconPath = $BrowserPath
+# ตรวจสอบ: เลือก Brave ก่อน
+if (Test-Path $BravePath) {
+    $SelectedBrowser = $BravePath
+    Write-Host "Found Browser: Brave" -ForegroundColor Green
+}
+# ตรวจสอบ: ถ้าไม่มี Brave ให้ดู Chrome
+elseif (Test-Path $ChromePath) {
+    $SelectedBrowser = $ChromePath
+    Write-Host "Found Browser: Chrome" -ForegroundColor Green
+}
+else {
+    # ถ้าไม่เจอทั้งคู่ แจ้งเตือนและจบการทำงาน
+    Write-Host "Error: Neither Brave nor Chrome found in standard locations." -ForegroundColor Red
+    Read-Host "Press Enter to exit"
+    exit
 }
 
-# --- 4. สร้าง Shortcut ---
-Write-Host "Creating Desktop Shortcut..." -ForegroundColor Cyan
-$WshShell = New-Object -ComObject WScript.Shell
-$Shortcut = $WshShell.CreateShortcut($ShortcutPath)
+# ---------------------------------------------------------
+# ขั้นตอนที่ 2: เปิดลิงก์ด้วย Browser ที่เลือก
+# ---------------------------------------------------------
+Write-Host "`n[STEP 2] Launching YouTube TV..." -ForegroundColor Cyan
+Start-Process -FilePath $SelectedBrowser -ArgumentList "https://youtube.com/tv"
 
-$Shortcut.TargetPath = $BrowserPath
-$Shortcut.Arguments = "--user-data-dir=""$ProfileDir"" --app=https://www.youtube.com/tv --disable-features=CalculateNativeWinOcclusion --user-agent=""$UserAgent"""
-$Shortcut.IconLocation = $IconPath # ชี้ไปที่ไฟล์ที่เราเพิ่งโหลดมา
-$Shortcut.Description = "YouTube on TV ($BrowserName)"
-$Shortcut.Save()
+Write-Host "========================================================" -ForegroundColor Yellow
+Write-Host " PLEASE INSTALL THE APP FROM BROWSER NOW!"
+Write-Host " (Look for 'Install YouTube on TV' icon in address bar)"
+Write-Host "========================================================" -ForegroundColor Yellow
 
-Write-Host "==========================================" -ForegroundColor Green
-Write-Host "Success! Shortcut created on Desktop." -ForegroundColor Green
-Write-Host "==========================================" -ForegroundColor Green
+# ---------------------------------------------------------
+# ขั้นตอนที่ 3: รอไฟล์ .lnk (Watcher Loop)
+# ---------------------------------------------------------
+Write-Host "`n[STEP 3] Waiting for shortcut creation on Desktop..." -ForegroundColor Cyan
+
+$FoundFile = $null
+while ($null -eq $FoundFile) {
+    # ค้นหาไฟล์ .lnk บน Desktop
+    $FoundFile = Get-ChildItem -Path $DesktopPath -Filter $ShortcutPattern | Select-Object -First 1
+    
+    if ($null -eq $FoundFile) {
+        # ถ้ายังไม่เจอ ให้รอ 2 วินาที
+        Start-Sleep -Seconds 2
+    }
+}
+
+# ---------------------------------------------------------
+# ขั้นตอนที่ 4: ดักจับและแก้ไข (Intercept & Modify)
+# ---------------------------------------------------------
+Write-Host "`n[STEP 4] Shortcut detected: $($FoundFile.Name)" -ForegroundColor Green
+Write-Host "Stealing and Modifying..." -ForegroundColor Cyan
+
+# รอ 2 วินาทีเพื่อให้แน่ใจว่า Browser เขียนไฟล์เสร็จสมบูรณ์
 Start-Sleep -Seconds 2
+
+try {
+    # สร้าง Object WScript.Shell เพื่อแก้ไข Shortcut
+    $WScript = New-Object -ComObject WScript.Shell
+    $Shortcut = $WScript.CreateShortcut($FoundFile.FullName)
+
+    Write-Host "Original Target: $($Shortcut.TargetPath)" -ForegroundColor Gray
+
+    # แก้ไข Target Path: เปลี่ยนจาก _proxy.exe เป็น .exe (รองรับทั้ง chrome_proxy และ brave_proxy)
+    if ($Shortcut.TargetPath -match "_proxy.exe") {
+        $Shortcut.TargetPath = $Shortcut.TargetPath -replace "_proxy.exe", ".exe"
+    }
+
+    # เติม User Agent ลงใน Arguments (ต่อท้ายของเดิม)
+    if ($Shortcut.Arguments -notmatch "user-agent") {
+        $Shortcut.Arguments = "$($Shortcut.Arguments) --user-agent=`"$UserAgentString`""
+    }
+
+    # บันทึกการเปลี่ยนแปลง
+    $Shortcut.Save()
+
+    Write-Host "Modified Target: $($Shortcut.TargetPath)" -ForegroundColor Green
+    Write-Host "Modified Args:   $($Shortcut.Arguments)" -ForegroundColor Green
+    Write-Host "`n[DONE] Shortcut hijacked successfully!" -ForegroundColor Yellow
+}
+catch {
+    Write-Host "Error modifying shortcut: $_" -ForegroundColor Red
+}
+
+Read-Host -Prompt "Press Enter to exit"
